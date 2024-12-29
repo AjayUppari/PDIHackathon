@@ -13,6 +13,7 @@ const {
   getEmployeeData,
   teamCreate,
   addParticipants,
+  addTeamMember,
   insertEvents,
   insertEventDates,
   insertProblemStatement,
@@ -857,7 +858,12 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+
+
+
+
 //POST Requests
+
 
 app.post("/createTeam", async (req, res) => {
   const { teamName, user, eventParticipants, eventId } = req.body;
@@ -868,31 +874,40 @@ app.post("/createTeam", async (req, res) => {
     .input("teamName", sql.NVarChar, teamName) // Example team name
     .input("eventId", sql.Numeric, eventId) // Example event ID
     .query(teamCreate);
-  await pool
+  const particpant= await pool
     .request()
+    .input("userId", sql.Int, user.user_id)
+    .input("isSelected", sql.VarChar, "true")
     .input("eventId", sql.Int, eventId)
-    .input("name", sql.NVarChar, user.Name)
-    .input("email", sql.NVarChar, user.EmailId)
-    .input("empid", sql.Int, user.EmpId)
-    .input("teamMember", sql.NVarChar, "false")
-    .input("teamId", sql.Int, result.recordset[0].TeamId)
     .query(addParticipants);
-  // console.log("Team id is ", result.recordset[0].TeamId); // Logs the generated TeamId
+
+  console.log(particpant)
+  await pool
+  .request()
+  .input("isTeamLead",sql.VarChar,"true")
+  .input("teamId",sql.Int,parseInt(result.recordset[0].team_id))
+  .input("participantId",sql.Int,parseInt(particpant.recordset[0].participant_id))
+  .query(addTeamMember);
+  
   for (const email of eventParticipants) {
     try {
       const employee = await pool
         .request()
         .input("email", sql.NVarChar, email)
-        .query("SELECT * FROM Employees WHERE EmailId = @email");
-      await pool
+        .query("SELECT * FROM USER_COPY WHERE email = @email");
+      console.log(employee)
+      const particpant= await pool
         .request()
+        .input("userId", sql.Int, parseInt(employee.recordset[0].user_id))
+        .input("isSelected", sql.VarChar, "true")
         .input("eventId", sql.Int, eventId)
-        .input("name", sql.NVarChar, employee.recordset[0].Name)
-        .input("email", sql.NVarChar, employee.recordset[0].EmailId)
-        .input("empid", sql.Int, employee.recordset[0].EmpId)
-        .input("teamMember", sql.NVarChar, "true")
-        .input("teamId", sql.Int, result.recordset[0].TeamId)
         .query(addParticipants);
+      await pool
+      .request()
+      .input("isTeamLead",sql.VarChar,"false")
+      .input("teamId",sql.Int,parseInt(result.recordset[0].team_id))
+      .input("participantId",sql.Int,parseInt(particpant.recordset[0].participant_id))
+      .query(addTeamMember);
 
       // console.log("Employee Details:", employee.recordset[0]);
     } catch (error) {
@@ -902,67 +917,67 @@ app.post("/createTeam", async (req, res) => {
   res.send("created successfully");
 });
 
-app.post("/createTeams", async (req, res) => {
-  const { teamName, user, eventParticipants, eventId } = req.body;
+// app.post("/createTeams", async (req, res) => {
+//   const { teamName, user, eventParticipants, eventId } = req.body;
 
-  const pool = await sql.connect(config);
+//   const pool = await sql.connect(config);
 
-  const teamLeadSelect = await pool
-    .request()
-    .input("teamLeadSelect", sql.NVarChar, "true")
-    .input("teamLeadEmail", sql.NVarChar, user.EmailId)
-    .query(
-      "update Employees set IsSelected=@teamLeadSelect where EmailId=@teamLeadEmail"
-    );
+//   const teamLeadSelect = await pool
+//     .request()
+//     .input("teamLeadSelect", sql.NVarChar, "true")
+//     .input("teamLeadEmail", sql.NVarChar, user.EmailId)
+//     .query(
+//       "update Employees set IsSelected=@teamLeadSelect where EmailId=@teamLeadEmail"
+//     );
 
-  for (var mail of eventParticipants) {
-    await pool
-      .request()
-      .input("teamMemSelect", sql.NVarChar, "true")
-      .input("teamMemEmail", sql.NVarChar, mail.EmailId)
-      .query(
-        "update Employees set IsSelected=@teamMemSelect where EmailId=@teamMemEmail"
-      );
-  }
+//   for (var mail of eventParticipants) {
+//     await pool
+//       .request()
+//       .input("teamMemSelect", sql.NVarChar, "true")
+//       .input("teamMemEmail", sql.NVarChar, mail.EmailId)
+//       .query(
+//         "update Employees set IsSelected=@teamMemSelect where EmailId=@teamMemEmail"
+//       );
+//   }
 
-  const result = await pool
-    .request()
-    .input("teamName", sql.NVarChar, teamName) // Example team name
-    .input("eventId", sql.Numeric, eventId) // Example event ID
-    .query(teamCreate);
-  await pool
-    .request()
-    .input("eventId", sql.Int, eventId)
-    .input("name", sql.NVarChar, user.Name)
-    .input("email", sql.NVarChar, user.EmailId)
-    .input("empid", sql.Int, user.EmpId)
-    .input("teamMember", sql.NVarChar, "false")
-    .input("teamId", sql.Int, result.recordset[0].TeamId)
-    .query(addParticipants);
-  // console.log("Team id is ", result.recordset[0].TeamId); // Logs the generated TeamId
-  for (const email of eventParticipants) {
-    try {
-      const employee = await pool
-        .request()
-        .input("email", sql.NVarChar, email.EmailId)
-        .query("SELECT * FROM Employees WHERE EmailId = @email");
-      await pool
-        .request()
-        .input("eventId", sql.Int, eventId)
-        .input("name", sql.NVarChar, employee.recordset[0].Name)
-        .input("email", sql.NVarChar, employee.recordset[0].EmailId)
-        .input("empid", sql.Int, employee.recordset[0].EmpId)
-        .input("teamMember", sql.NVarChar, "true")
-        .input("teamId", sql.Int, result.recordset[0].TeamId)
-        .query(addParticipants);
+//   const result = await pool
+//     .request()
+//     .input("teamName", sql.NVarChar, teamName) // Example team name
+//     .input("eventId", sql.Numeric, eventId) // Example event ID
+//     .query(teamCreate);
+//   await pool
+//     .request()
+//     .input("eventId", sql.Int, eventId)
+//     .input("name", sql.NVarChar, user.Name)
+//     .input("email", sql.NVarChar, user.EmailId)
+//     .input("empid", sql.Int, user.EmpId)
+//     .input("teamMember", sql.NVarChar, "false")
+//     .input("teamId", sql.Int, result.recordset[0].TeamId)
+//     .query(addParticipants);
+//   // console.log("Team id is ", result.recordset[0].TeamId); // Logs the generated TeamId
+//   for (const email of eventParticipants) {
+//     try {
+//       const employee = await pool
+//         .request()
+//         .input("email", sql.NVarChar, email.EmailId)
+//         .query("SELECT * FROM Employees WHERE EmailId = @email");
+//       await pool
+//         .request()
+//         .input("eventId", sql.Int, eventId)
+//         .input("name", sql.NVarChar, employee.recordset[0].Name)
+//         .input("email", sql.NVarChar, employee.recordset[0].EmailId)
+//         .input("empid", sql.Int, employee.recordset[0].EmpId)
+//         .input("teamMember", sql.NVarChar, "true")
+//         .input("teamId", sql.Int, result.recordset[0].TeamId)
+//         .query(addParticipants);
 
-      // console.log("Employee Details:", employee.recordset[0]);
-    } catch (error) {
-      console.error("Error fetching employee for email:", email, error);
-    }
-  }
-  res.json({ success: true, message: "Team created successfully" });
-});
+//       // console.log("Employee Details:", employee.recordset[0]);
+//     } catch (error) {
+//       console.error("Error fetching employee for email:", email, error);
+//     }
+//   }
+//   res.json({ success: true, message: "Team created successfully" });
+// });
 
 app.put("/selectEmployee", async (req, res) => {
   const { EmployeeId } = req.body;
@@ -1509,52 +1524,56 @@ app.post("/getTeamMemebers", async (req, res) => {
 });
 
 // PUT requests
-app.put("/problemSelect/:empid", async (req, res) => {
-  const { empid } = req.params;
-  const { eventId, ProbId } = req.body;
+app.put("/problemSelect", async (req, res) => {
+  const { user_id,eventId, ProbId } = req.body;
   const pool = await sql.connect(config);
-  const employee = await pool
+  const particpant = await pool
     .request()
-    .input("empid", sql.Int, parseInt(empid))
-    .input("eventId", sql.Int, eventId)
+    .input("userId", sql.Int, parseInt(user_id))
+    .input("eventId", sql.Int, parseInt(eventId))
     .query(
-      "SELECT TeamId FROM EventParticipants WHERE EmpId = @empid AND EventId=@eventId"
+      "SELECT participant_id FROM PARTICIPANT WHERE user_id = @userId AND event_id=@eventId"
     );
 
+  const team= await pool
+    .request()
+    .input("participantId",sql.Int,parseInt(particpant.recordset[0].participant_id))
+    .query("SELECT team_id from TEAM_MEMBER WHERE participant_id=@participantId")
+  
   const result = await pool
     .request()
-    .input("eventId", sql.Int, eventId)
-    .input("probId", sql.Int, ProbId)
-    .input("teamId", sql.Int, employee.recordset[0].TeamId)
+    .input("eventId", sql.Int, parseInt(eventId))
+    .input("probId", sql.Int, parseInt(ProbId))
+    .input("teamId", sql.Int, parseInt(team.recordset[0].team_id))
     .query(
-      "UPDATE Teams SET ProbId=@probId WHERE TeamId=@teamId AND EventId=@eventId"
+      "UPDATE TEAM SET problem_id=@probId WHERE team_id=@teamId AND event_id=@eventId"
     );
   res.send({ status: "success", msg: "Data Updated Successfully!" });
 });
 
-app.put("/employeeSelect/:empid", async (req, res) => {
-  const { empid } = req.params;
-  const pool = await sql.connect(config);
-  const employee = await pool
-    .request()
-    .input("empid", sql.Int, parseInt(empid))
-    .input("isSelected", sql.NVarChar, "true")
-    .query("UPDATE Employees SET IsSelected=@isSelected WHERE EmpId = @empid");
-  res.send({ status: "success", msg: "Employee Updated Successfully!" });
-});
+// app.put("/employeeSelect/:empid", async (req, res) => {
+//   const { empid } = req.params;
+//   const pool = await sql.connect(config);
+//   const employee = await pool
+//     .request()
+//     .input("empid", sql.Int, parseInt(empid))
+//     .input("isSelected", sql.NVarChar, "true")
+//     .query("UPDATE Employees SET IsSelected=@isSelected WHERE EmpId = @empid");
+//   res.send({ status: "success", msg: "Employee Updated Successfully!" });
+// });
 
-app.put("/selectProblem/:probId", async (req, res) => {
-  const { probId } = req.params;
-  const pool = await sql.connect(config);
+// app.put("/selectProblem/:probId", async (req, res) => {
+//   const { probId } = req.params;
+//   const pool = await sql.connect(config);
 
-  const result = pool
-    .request()
-    .query(
-      `UPDATE ProblemStatements SET IsAvailable = 'false' WHERE ProbId = ${probId}`
-    );
+//   const result = pool
+//     .request()
+//     .query(
+//       `UPDATE ProblemStatements SET IsAvailable = 'false' WHERE ProbId = ${probId}`
+//     );
 
-  res.send({ message: "Problem chosen succesfully" });
-});
+//   res.send({ message: "Problem chosen succesfully" });
+// });
 
 app.put("/saveDraft/:draftId", upload.single("file"), async (req, resp) => {
   // const { name, rules, prizes, dates,lastDateModified,problemStatements,teamSize } = req.body.eventData;

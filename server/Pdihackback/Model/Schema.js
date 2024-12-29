@@ -301,14 +301,20 @@ const getProbsData = `
 `;
 
 const teamCreate = `
-INSERT INTO Teams (TeamName, EventId)
-    OUTPUT INSERTED.TeamId
+INSERT INTO TEAM (team_name,event_id)
+    OUTPUT INSERTED.team_id
     VALUES (@teamName, @eventId);
 `;
 
 const addParticipants = `
-  INSERT INTO EventParticipants (EventId,Name, Email,EmpId ,TeamMember, TeamId)
-      VALUES (@eventId,@name, @email,@empid,@teamMember , @teamId);
+  INSERT INTO PARTICIPANT (user_id,isSelected,event_id)
+      OUTPUT INSERTED.participant_id
+      VALUES (@userId,@isSelected,@eventId);
+`;
+
+const addTeamMember=`
+  INSERT INTO TEAM_MEMBER(is_teamlead,team_id,participant_id)
+      VALUES(@isTeamLead,@teamId,@participantId);
 `;
 
 const insertProblemStatement = `
@@ -478,4 +484,5 @@ module.exports = {
   getOngoingEventId,
   updateTimelinePhase,
   updateAndPublishEventQuery,
+  addTeamMember
 };
