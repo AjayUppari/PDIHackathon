@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import ProjectSelectionModal from './forms/ProjectSelectionModal'
 import DocumentSubmissionModal from './forms/DocumentSubmissionModal'
 import ProjectSubmissionModal from './forms/ProjectSubmissionModal'

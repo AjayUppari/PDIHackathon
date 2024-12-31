@@ -1,4 +1,7 @@
 import { format } from 'date-fns';
+import TeamRegistrationModal from '../participant/EventRegistration'
+import ProjectSelcetionModal from '../participant/forms/ProjectSelectionModal'
+import { useState } from 'react';
 
 async function onClickFinishPhase (phase, index){
   //Here call API for updating the phase status to finished
@@ -29,63 +32,68 @@ async function onClickFinishPhase (phase, index){
   console.log('response is ', jsonData)
 }
 
-function displayTimelinePhaseButtonBasedOnUserRole(phase, index){
-
-  const userRole = localStorage.getItem('userRole');
-  if(userRole === 'Organizer' && phase.status === 'active'){
-    return (
-      <button onClick={() => onClickFinishPhase(phase.name, index)} className="text-sm text-blue-500 hover:underline">Finish Phase</button>
-    )
-  }
-  else if(userRole === 'null'){
-    if(phase.name === 'registration_start' && phase.status === 'active'){
-      return (
-        <button className="text-sm text-blue-500">Register</button>
-      )
-    }
-    else if(phase.name === 'problem_selection' && phase.status === 'active'){
-      return (
-        <button className="text-sm text-blue-500">Choose Problem</button>
-      )
-    }
-    else if(phase.name === 'design_submission' && phase.status === 'active'){
-      return (
-        <button className="text-sm text-blue-500">Submit Document</button>
-      )
-    }
-    else if(phase.name === 'project_submission' && phase.status === 'active'){
-      return (
-        <button className="text-sm text-blue-500">Submit Project</button>
-      )
-    }
-  }
-  else if(userRole === 'Reviewer'){
-    if(phase.name === 'review' && phase.status === 'active'){
-      return (
-        <button className="text-sm text-blue-500">Review Submissions</button>
-      )
-    }
-  }
-}
-
 function snakeToSentence(snakeCaseStr) {
-  // Replace underscores with spaces
   let sentence = snakeCaseStr.replace(/_/g, ' ');
-
-  // Convert the first character to uppercase and the rest to lowercase
   sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1).toLowerCase();
-
   return sentence;
 }
 
 let phasesData;
 let eventID
 
-function EventTimeline({ phases, eventId }) {
+function EventTimeline({ phases, eventId, teamMaxSize, eventStatus }) {
+  const [modalStatuses, setModalStatuses] = useState({
+    register: false,
+    projectSelection: false
+  });
+
+  function onChangeModal(modalStatus){
+    setModalStatuses({...modalStatuses, ...modalStatus})
+  }
+
+  function displayTimelinePhaseButtonBasedOnUserRole(phase, index){
+
+    const userRole = localStorage.getItem('userRole');
+
+    if(userRole === 'Organizer' && phase.status === 'active'){
+      return (
+        <button onClick={() => onClickFinishPhase(phase.name, index)} className="text-sm text-blue-500 hover:underline">Finish Phase</button>
+      )
+    }
+    else if(userRole === 'null'){
+      if(phase.name === 'registration_start' && phase.status === 'active'){
+        return (
+          <button onClick={() => onChangeModal({register: true})} className="text-sm text-blue-500">Register</button>
+        )
+      }
+      else if(phase.name === 'problem_selection' && phase.status === 'active'){
+        return (
+          <button onClick={() => onChangeModal({projectSelection: true})} className="text-sm text-blue-500">Choose Problem</button>
+        )
+      }
+      else if(phase.name === 'design_submission' && phase.status === 'active'){
+        return (
+          <button className="text-sm text-blue-500">Submit Document</button>
+        )
+      }
+      else if(phase.name === 'project_submission' && phase.status === 'active'){
+        return (
+          <button className="text-sm text-blue-500">Submit Project</button>
+        )
+      }
+    }
+    else if(userRole === 'Reviewer'){
+      if(phase.name === 'review' && phase.status === 'active'){
+        return (
+          <button className="text-sm text-blue-500">Review Submissions</button>
+        )
+      }
+    }
+  }
 
   phasesData = phases
   eventID = eventId
-  console.log('phases are ', phasesData)
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-6">Event Timeline</h2>
@@ -100,12 +108,15 @@ function EventTimeline({ phases, eventId }) {
                 <p className="text-sm text-gray-500">
                   {format(new Date(phase.deadline), 'MM/dd/yyyy')}
                 </p>
-                {displayTimelinePhaseButtonBasedOnUserRole(phase, index)}
+                {eventStatus === 'Ongoing' && displayTimelinePhaseButtonBasedOnUserRole(phase, index)}
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      <TeamRegistrationModal eventId={eventId} teamMaxSize={teamMaxSize} isOpen={modalStatuses.register} onClose={() => onChangeModal({register: false})} />
+      <ProjectSelcetionModal eventId={eventId} isOpen={modalStatuses.projectSelection} onClose={() => onChangeModal({projectSelection: false})} />
     </div>
   );
 }

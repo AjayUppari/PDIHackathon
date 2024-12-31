@@ -1,108 +1,112 @@
-import React, { useState } from 'react'
-import { Dialog } from '@headlessui/react'
+import { useState, useEffect } from "react";
+import { Dialog } from "@headlessui/react";
 
-function ProjectSelectionModal({ isOpen, onClose, onSubmit }) {
-  const [formData, setFormData] = useState({
-    projectTitle: '',
-    description: '',
-    techStack: '',
-    teamSize: '',
-    expectedDeliverables: ''
-  })
+function ProjectSelectionModal({ isOpen, onClose, onSubmit, eventId }) {
+  const [problems, setProblems] = useState([]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    onSubmit(formData)
+  // const handleSubmit = (e) => {
+  //   e.preventDefault()
+  //   onSubmit(formData)
+  // }
+
+  useEffect(() => {
+    async function getAllProblems() {
+      const userId = JSON.parse(localStorage.getItem("userData")).userId;
+
+      const url = `http://localhost:5000/getAllProblems?eventId=${eventId}&userId=${userId}`;
+
+      const problemsResponse = await fetch(url);
+      const searchEmployeesData = await problemsResponse.json();
+
+      console.log("searchEmployeesData", searchEmployeesData);
+      setProblems(searchEmployeesData.problemsData);
+    }
+
+    if (isOpen) {
+      getAllProblems();
+    }
+  }, [isOpen]);
+
+  async function SelectProblem(problemDetails) {
+    const url = "http://localhost:5000/problemSelect";
+
+    const problemsResponse = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        user_id: JSON.parse(localStorage.getItem("userData")).userId,
+        eventId: eventId,
+        ProbId: problemDetails.problem_id,
+      }),
+    });
+    
+    const searchEmployeesData = await problemsResponse.json();
+
+    console.log("searchEmployeesData", searchEmployeesData);
   }
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-      
+
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="w-full max-w-md bg-white rounded-lg p-6">
           <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">
             Choose Project
           </Dialog.Title>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Project Title</label>
-              <input
-                type="text"
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.projectTitle}
-                onChange={(e) => setFormData({ ...formData, projectTitle: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                required
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Tech Stack</label>
-              <input
-                type="text"
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.techStack}
-                onChange={(e) => setFormData({ ...formData, techStack: e.target.value })}
-                placeholder="e.g., React, Node.js, MongoDB"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Team Size</label>
-              <input
-                type="number"
-                required
-                min="1"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.teamSize}
-                onChange={(e) => setFormData({ ...formData, teamSize: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Expected Deliverables</label>
-              <textarea
-                required
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.expectedDeliverables}
-                onChange={(e) => setFormData({ ...formData, expectedDeliverables: e.target.value })}
-              />
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
-              >
-                Submit
-              </button>
-            </div>
-          </form>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Problem Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Problem Description
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {problems
+                .filter((problem) => problem.problem_id)
+                .map((problem) => (
+                  <tr key={problem.problem_id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[#07003D]">
+                        {problem.problem_name}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[#07003D]">
+                        {problem.problem_description}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {problem.problem_id ===
+                      problems[problems.length - 1].selectedProblem ? (
+                        <p>Selected</p>
+                      ) : (
+                        <button
+                          onClick={() => SelectProblem(problem)}
+                          className="text-[#00D2F4] hover:text-[#1226AA] mr-4"
+                        >
+                          Select
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
         </Dialog.Panel>
       </div>
     </Dialog>
-  )
+  );
 }
 
-export default ProjectSelectionModal
+export default ProjectSelectionModal;

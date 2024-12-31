@@ -531,8 +531,6 @@ app.get('/event/:id', async (req, res) => {
               .input('teamId', sql.Int, team.team_id)
               .query(teamMembersQuery);
 
-          console.log('team member result', teamMembersResult)
-
           team.members = teamMembersResult.recordset;
           totalParticipants += team.members.length;
 
@@ -787,7 +785,7 @@ app.get("/getDraftsDataNew", async (req, res) => {
   }
 });
 
-app.get('/api/users', async (req, res) => {
+app.get('/searchEmployees', async (req, res) => {
   try {
       // Connect to the database
       let pool = await sql.connect(config);
@@ -858,8 +856,34 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+app.get("/getAllProblems", async (req, res) => {
+  const {eventId,userId} = req.query;
 
+  const pool = await sql.connect(config);
+  const result = await pool
+    .request()
+    .input("eventId", sql.Int, parseInt(eventId))
+    .query(getProbsData);
 
+    const particpant = await pool
+    .request()
+    .input("userId", sql.Int, parseInt(userId))
+    .input("eventId", sql.Int, parseInt(eventId))
+    .query(
+      "SELECT participant_id FROM PARTICIPANT WHERE user_id = @userId AND event_id=@eventId"
+    );
+
+  const team= await pool
+    .request()
+    .input("participantId",sql.Int,parseInt(particpant.recordset[0].participant_id))
+    .query("SELECT team_id from TEAM_MEMBER WHERE participant_id=@participantId")
+
+  const selectedProblemId=await pool
+    .request()
+    .input("teamId",sql.Int,parseInt(team.recordset[0].team_id))
+    .query("SELECT problem_id from TEAM where team_id=@teamId")
+  res.send({problemsData: [...result.recordset,{selectedProblem:selectedProblemId.recordset[0].problem_id}]});
+});
 
 
 //POST Requests
@@ -867,7 +891,8 @@ app.get('/api/users', async (req, res) => {
 
 app.post("/createTeam", async (req, res) => {
   const { teamName, user, eventParticipants, eventId } = req.body;
-  console.log(req.body);
+  console.log(req.body)
+
   const pool = await sql.connect(config);
   const result = await pool
     .request()
@@ -876,26 +901,27 @@ app.post("/createTeam", async (req, res) => {
     .query(teamCreate);
   const particpant= await pool
     .request()
-    .input("userId", sql.Int, user.user_id)
+    .input("userId", sql.Int, user.userId)
     .input("isSelected", sql.VarChar, "true")
     .input("eventId", sql.Int, eventId)
     .query(addParticipants);
 
-  console.log(particpant)
   await pool
   .request()
   .input("isTeamLead",sql.VarChar,"true")
   .input("teamId",sql.Int,parseInt(result.recordset[0].team_id))
   .input("participantId",sql.Int,parseInt(particpant.recordset[0].participant_id))
   .query(addTeamMember);
+
+  console.log('event participants are ', eventParticipants)
   
-  for (const email of eventParticipants) {
+  for (const participant of eventParticipants) {
     try {
       const employee = await pool
         .request()
-        .input("email", sql.NVarChar, email)
+        .input("email", sql.NVarChar, participant.email)
         .query("SELECT * FROM USER_COPY WHERE email = @email");
-      console.log(employee)
+        console.log('employee is ', employee)
       const particpant= await pool
         .request()
         .input("userId", sql.Int, parseInt(employee.recordset[0].user_id))
@@ -914,7 +940,7 @@ app.post("/createTeam", async (req, res) => {
       console.error("Error fetching employee for email:", email, error);
     }
   }
-  res.send("created successfully");
+  res.send({message: "created successfully"});
 });
 
 // app.post("/createTeams", async (req, res) => {
@@ -1526,6 +1552,7 @@ app.post("/getTeamMemebers", async (req, res) => {
 // PUT requests
 app.put("/problemSelect", async (req, res) => {
   const { user_id,eventId, ProbId } = req.body;
+  console.log(req.body);
   const pool = await sql.connect(config);
   const particpant = await pool
     .request()

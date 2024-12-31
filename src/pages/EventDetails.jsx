@@ -62,8 +62,6 @@ function EventDetails() {
   const location = useLocation()
   const data = location.state
 
-  console.log('data is ', eventDetailsData)
-
   useEffect(() => {
     async function fetchAllEvents() {
       try {
@@ -117,7 +115,7 @@ function EventDetails() {
               {name:"project_submission",deadline:eventDetailsData.project_submission_deadline, status: eventDetailsData.timeline.project_submission},
               {name:"review",deadline:eventDetailsData.reviewer_submission_deadline, status: eventDetailsData.timeline.review},
               {name:"results",deadline:eventDetailsData.results_announcement_date, status: eventDetailsData.timeline.results},
-              ]} eventId={eventDetailsData.event_id} />
+              ]} eventId={eventDetailsData.event_id} teamMaxSize={eventDetailsData.team_size} eventStatus={eventDetailsData.status} />
           </div>
         </div>
       </div>

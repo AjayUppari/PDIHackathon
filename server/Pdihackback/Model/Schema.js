@@ -296,7 +296,7 @@ const getTeamsData = `
 `;
 
 const getProbsData = `
-  SELECT ProbId,ProbName, ProbDesc, IsAvailable FROM ProblemStatements WHERE EventId=@eventId;
+  SELECT problem_id,problem_name, problem_description FROM PROBLEM WHERE event_id=@eventId;
 ;
 `;
 
