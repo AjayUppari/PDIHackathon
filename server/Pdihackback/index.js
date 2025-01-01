@@ -1435,14 +1435,45 @@ app.post("/saveAndPublishEvent", upload.single("file"), async (req, resp) => {
 
 app.post("/documentSub", upload.single("file"), async (req, res) => {
   const file = req.file;
-  const { teamId, teamName, eventId } = req.body;
+  const { userId, eventId } = JSON.parse(req.body.userAndEventDetails);
   const pool = await sql.connect(config);
+
+  console.log('file is ', file)
+  console.log('userId is ', userId)
+  console.log('eventId is ', eventId)
+
+  const particpant = await pool
+    .request()
+    .input("userId", sql.Int, parseInt(userId))
+    .input("eventId", sql.Int, parseInt(eventId))
+    .query(
+      "SELECT participant_id FROM PARTICIPANT WHERE user_id = @userId AND event_id=@eventId"
+    );
+
+    console.log('participant is ', particpant)
+
+  const team= await pool
+    .request()
+    .input("participantId",sql.Int,parseInt(particpant.recordset[0].participant_id))
+    .query("SELECT team_id from TEAM_MEMBER WHERE participant_id=@participantId")
+
+  const getTeamName=await pool
+  .request()
+  .input("teamId",sql.Int,parseInt(team.recordset[0].team_id))
+  .input("eventId", sql.Int, parseInt(eventId))
+  .query("select team_name from TEAM where team_id=@teamId AND event_id=@eventId")
+
+  const selectedProblemId=await pool
+  .request()
+  .input("teamId",sql.Int,parseInt(team.recordset[0].team_id))
+  .input("eventId", sql.Int, parseInt(eventId))
+  .query("SELECT problem_id from TEAM where team_id=@teamId AND event_id=@eventId")
 
   if (!file) return res.status(400).send("No file uploaded.");
 
   const { data, error } = await supabase.storage
     .from("PDIDocuments")
-    .upload(`uploads/${teamName}`, file.buffer, {
+    .upload(`uploads/${getTeamName.recordset[0].team_name}`, file.buffer, {
       contentType: file.mimetype,
     });
 
@@ -1450,14 +1481,16 @@ app.post("/documentSub", upload.single("file"), async (req, res) => {
 
   const { data: publicUrlData } = supabase.storage
     .from("PDIDocuments")
-    .getPublicUrl(`uploads/${teamName}`);
+    .getPublicUrl(`uploads/${getTeamName.recordset[0].team_name}`);
 
   const result = await pool
     .request()
-    .input("teamId", sql.Int, parseInt(teamId))
+    .input("teamId", sql.Int, parseInt(team.recordset[0].team_id))
     .input("eventId", sql.Int, parseInt(eventId))
-    .input("DocumentUrl", sql.NVarChar, publicUrlData.publicUrl)
-    .query(docSubmit);
+    .input("problemId", sql.Int, parseInt(selectedProblemId.recordset[0].problem_id))
+    .input("DocumentLink", sql.NVarChar, publicUrlData.publicUrl)
+    .input("docSubDate", sql.DateTime, new Date())
+    .query("INSERT INTO SUBMISSION (team_id,problem_id, document_link,event_id, doc_sub_date) VALUES (@teamId,@problemId, @DocumentLink,@eventId,@docSubDate);");
 
   console.log("Data inserted successfully:", result);
 
@@ -1499,23 +1532,23 @@ app.post("/addImage", upload.single("file"), async (req, res) => {
   });
 });
 
-app.post("/codeSubmission", async (req, res) => {
-  const { CodeRepoLink, CodeDemoLink, TeamId, EventId } = req.body;
-  const pool = await sql.connect(config);
-  const document = await pool.request().input("TeamId", sql.Int, TeamId).query(`
-                  SELECT * FROM ProjectDocuments WHERE TeamId=@TeamId
-                  `);
-  const result = await pool
-    .request()
-    .input("RepoLink", sql.NVarChar, CodeRepoLink)
-    .input("DemoLink", sql.NVarChar, CodeDemoLink)
-    .input("TeamId", sql.Int, TeamId)
-    .input("EventId", sql.Int, EventId)
-    .input("DocumentId", sql.Int, document.recordset[0].DocumentId)
-    .query(codeSubmit);
+// app.post("/codeSubmission", async (req, res) => {
+//   const { CodeRepoLink, CodeDemoLink, TeamId, EventId } = req.body;
+//   const pool = await sql.connect(config);
+//   const document = await pool.request().input("TeamId", sql.Int, TeamId).query(`
+//                   SELECT * FROM ProjectDocuments WHERE TeamId=@TeamId
+//                   `);
+//   const result = await pool
+//     .request()
+//     .input("RepoLink", sql.NVarChar, CodeRepoLink)
+//     .input("DemoLink", sql.NVarChar, CodeDemoLink)
+//     .input("TeamId", sql.Int, TeamId)
+//     .input("EventId", sql.Int, EventId)
+//     .input("DocumentId", sql.Int, document.recordset[0].DocumentId)
+//     .query(codeSubmit);
 
-  res.send("Data Inserted Successfully!");
-});
+//   res.send("Data Inserted Successfully!");
+// });
 
 app.post("/getTeamMemebers", async (req, res) => {
   const { email, eventId } = req.body;
@@ -1954,6 +1987,38 @@ app.put("/updateAndPublishEvent", upload.single("file"), async (req, resp) => {
     eventId,
     msg: "Event updated and published successfully",
   });
+});
+
+app.put("/codeSubmission", async (req, res) => {
+  const { CodeRepoLink, CodeDemoLink, userId, eventId } = req.body;
+  console.log('code submission body is ', req.body)
+  const pool = await sql.connect(config);
+
+  const particpant = await pool
+    .request()
+    .input("userId", sql.Int, parseInt(userId))
+    .input("eventId", sql.Int, parseInt(eventId))
+    .query(
+      "SELECT participant_id FROM PARTICIPANT WHERE user_id = @userId AND event_id=@eventId"
+    );
+
+    console.log('participant is ', particpant)
+
+  const team= await pool
+    .request()
+    .input("participantId",sql.Int,parseInt(particpant.recordset[0].participant_id))
+    .query("SELECT team_id from TEAM_MEMBER WHERE participant_id=@participantId")
+
+  const result = await pool
+    .request()
+    .input("RepoLink", sql.NVarChar, CodeRepoLink)
+    .input("DemoLink", sql.NVarChar, CodeDemoLink)
+    .input("TeamId", sql.Int, parseInt(team.recordset[0].team_id))
+    .input("EventId", sql.Int, parseInt(eventId))
+    .input("projectSubDate", sql.DateTime, new Date())
+    .query("UPDATE SUBMISSION SET repository_link=@RepoLink, live_link=@DemoLink, proj_sub_date=@projectSubDate WHERE team_id=@TeamId AND event_id=@EventId");
+
+  res.send({ message: "Data Inserted Successfully!"});
 });
 
 // Example: Add a sample document

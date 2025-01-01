@@ -1,6 +1,8 @@
 import { format } from 'date-fns';
 import TeamRegistrationModal from '../participant/EventRegistration'
 import ProjectSelcetionModal from '../participant/forms/ProjectSelectionModal'
+import DocumentSubmissionModal from '../participant/forms/DocumentSubmissionModal'
+import ProjectSubmissionModal from '../participant/forms/ProjectSubmissionModal'
 import { useState } from 'react';
 
 async function onClickFinishPhase (phase, index){
@@ -44,7 +46,9 @@ let eventID
 function EventTimeline({ phases, eventId, teamMaxSize, eventStatus }) {
   const [modalStatuses, setModalStatuses] = useState({
     register: false,
-    projectSelection: false
+    projectSelection: false,
+    documentSubmission: false,
+    projectSubmission: false
   });
 
   function onChangeModal(modalStatus){
@@ -73,12 +77,12 @@ function EventTimeline({ phases, eventId, teamMaxSize, eventStatus }) {
       }
       else if(phase.name === 'design_submission' && phase.status === 'active'){
         return (
-          <button className="text-sm text-blue-500">Submit Document</button>
+          <button onClick={() => onChangeModal({documentSubmission: true})} className="text-sm text-blue-500">Submit Document</button>
         )
       }
       else if(phase.name === 'project_submission' && phase.status === 'active'){
         return (
-          <button className="text-sm text-blue-500">Submit Project</button>
+          <button onClick={() => onChangeModal({projectSubmission: true})} className="text-sm text-blue-500">Submit Project</button>
         )
       }
     }
@@ -117,7 +121,9 @@ function EventTimeline({ phases, eventId, teamMaxSize, eventStatus }) {
 
       <TeamRegistrationModal eventId={eventId} teamMaxSize={teamMaxSize} isOpen={modalStatuses.register} onClose={() => onChangeModal({register: false})} />
       <ProjectSelcetionModal eventId={eventId} isOpen={modalStatuses.projectSelection} onClose={() => onChangeModal({projectSelection: false})} />
-    </div>
+      <DocumentSubmissionModal eventId={eventId} isOpen={modalStatuses.documentSubmission} onClose={() => onChangeModal({documentSubmission: false})} />
+      <ProjectSubmissionModal eventId={eventId} isOpen={modalStatuses.projectSubmission} onClose={() => onChangeModal({projectSubmission: false})} />
+    </div> 
   );
 }
 

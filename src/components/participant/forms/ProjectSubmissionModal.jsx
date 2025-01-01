@@ -1,19 +1,39 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Dialog } from '@headlessui/react'
 
-function ProjectSubmissionModal({ isOpen, onClose, onSubmit }) {
+function ProjectSubmissionModal({ isOpen, onClose, onSubmit, eventId }) {
   const [formData, setFormData] = useState({
     repositoryUrl: '',
     deployedUrl: '',
-    techStack: '',
-    features: '',
-    setupInstructions: '',
-    additionalNotes: ''
   })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onSubmit(formData)
+
+    const userId = JSON.parse(localStorage.getItem('userData')).userId
+
+    console.log({
+      userId: userId,
+      eventId: eventId,
+      CodeRepoLink: formData.repositoryUrl,
+      CodeDemoLink: formData.deployedUrl,
+    })
+
+    const response = await fetch("http://localhost:5000/codeSubmission", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        userId: userId,
+        eventId: eventId,
+        CodeRepoLink: formData.repositoryUrl,
+        CodeDemoLink: formData.deployedUrl,
+      }),
+    })
+    const data = await response.json()
+    console.log(data)
+
   }
 
   return (
@@ -48,53 +68,6 @@ function ProjectSubmissionModal({ isOpen, onClose, onSubmit }) {
                 value={formData.deployedUrl}
                 onChange={(e) => setFormData({ ...formData, deployedUrl: e.target.value })}
                 placeholder="e.g., https://your-project.netlify.app"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Tech Stack Used</label>
-              <input
-                type="text"
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.techStack}
-                onChange={(e) => setFormData({ ...formData, techStack: e.target.value })}
-                placeholder="e.g., React, Node.js, MongoDB"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Key Features</label>
-              <textarea
-                required
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.features}
-                onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                placeholder="List the main features of your project"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Setup Instructions</label>
-              <textarea
-                required
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.setupInstructions}
-                onChange={(e) => setFormData({ ...formData, setupInstructions: e.target.value })}
-                placeholder="Steps to set up and run the project locally"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Additional Notes</label>
-              <textarea
-                rows={2}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.additionalNotes}
-                onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-                placeholder="Any additional information you want to share"
               />
             </div>
 

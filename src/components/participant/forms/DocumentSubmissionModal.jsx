@@ -1,17 +1,30 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Dialog } from '@headlessui/react'
 
-function DocumentSubmissionModal({ isOpen, onClose, onSubmit }) {
-  const [formData, setFormData] = useState({
-    documentTitle: '',
-    description: '',
-    documentFile: null,
-    additionalNotes: ''
-  })
+function DocumentSubmissionModal({ isOpen, onClose, onSubmit, eventId }) {
+  const [formData, setFormData] = useState()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onSubmit(formData)
+    const documentSubmissionForm = new FormData();
+
+    const userId = JSON.parse(localStorage.getItem('userData')).userId
+    const userAndEventDetails = {
+      userId: userId,
+      eventId: eventId
+    }
+
+    documentSubmissionForm.append("userAndEventDetails", JSON.stringify(userAndEventDetails)); // Append event data as JSON
+    documentSubmissionForm.append("file", formData);
+    
+    console.log('formData:', documentSubmissionForm)
+
+    const response = await fetch("http://localhost:5000/documentSub", {
+      method: "POST",      
+      body: documentSubmissionForm,
+    })
+    const data = await response.json()
+
   }
 
   return (
@@ -26,47 +39,18 @@ function DocumentSubmissionModal({ isOpen, onClose, onSubmit }) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Document Title</label>
-              <input
-                type="text"
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.documentTitle}
-                onChange={(e) => setFormData({ ...formData, documentTitle: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                required
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-
-            <div>
               <label className="block text-sm font-medium text-gray-700">Upload Document</label>
               <input
                 type="file"
                 required
                 accept=".pdf,.doc,.docx"
                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                onChange={(e) => setFormData({ ...formData, documentFile: e.target.files[0] })}
+                onChange={(e) => {
+                  console.log('File:', e.target.files[0])
+                  setFormData(e.target.files[0])
+                }}
               />
               <p className="mt-1 text-sm text-gray-500">PDF, DOC, or DOCX files only</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Additional Notes</label>
-              <textarea
-                rows={2}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={formData.additionalNotes}
-                onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-              />
             </div>
 
             <div className="flex justify-end space-x-3">

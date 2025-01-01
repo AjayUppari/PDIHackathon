@@ -8,7 +8,7 @@ import ModalContext from '../context/TimelineContext'
 
 function CreateEventModal({ isOpen, onClose }) {
   const [currentStep, setCurrentStep] = useState(1)
-  const { eventData, setEventData} = useContext(ModalContext)
+  const { eventData, setEventData } = useContext(ModalContext)
 
   const steps = [
     { id: 1, name: 'Create Event' },
@@ -44,7 +44,7 @@ function CreateEventModal({ isOpen, onClose }) {
 
     if(eventData.name === "") {
       alert('Event name mandatory')
-    }
+    }  
     else{
       const response= await fetch("http://localhost:5000/saveAndPublishEvent", {
         method: "POST",

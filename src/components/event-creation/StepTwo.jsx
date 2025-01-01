@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 function StepTwo({ eventData, setEventData }) {
   const [newProblem, setNewProblem] = useState({
