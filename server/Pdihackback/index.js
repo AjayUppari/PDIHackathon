@@ -628,7 +628,7 @@ app.get("/getData/:id", async (req, res) => {
 app.get("/getCodeSubmissions", async (req, res) => {
   try {
     const pool = await sql.connect(config);
-    const data = pool.request().query(getCodeSubData);
+    const data = pool.request().query(" SELECT t.team_name,p.problem_name,s.document_link,s.repository_link,s.live_link  FROM SUBMISSION s JOIN TEAM t ON s.team_id = t.team_id JOIN PROBLEM p ON s.problem_id = p.problem_id WHERE s.event_id = 1;");
     data.then((result) => {
       return res.json(result.recordset);
     });
@@ -1490,13 +1490,39 @@ app.post("/documentSub", upload.single("file"), async (req, res) => {
     .input("problemId", sql.Int, parseInt(selectedProblemId.recordset[0].problem_id))
     .input("DocumentLink", sql.NVarChar, publicUrlData.publicUrl)
     .input("docSubDate", sql.DateTime, new Date())
-    .query("INSERT INTO SUBMISSION (team_id,problem_id, document_link,event_id, doc_sub_date) VALUES (@teamId,@problemId, @DocumentLink,@eventId,@docSubDate);");
+    .input('status',sql.VarChar,'incomplete')
+    .query("INSERT INTO SUBMISSION (team_id,problem_id, document_link,event_id, doc_sub_date,status) VALUES (@teamId,@problemId, @DocumentLink,@eventId,@docSubDate,@status);");
 
   console.log("Data inserted successfully:", result);
+
+  
 
   res.status(200).send({
     message: "File uploaded successfully.",
   });
+});
+
+
+app.post('/scoreSubmission',async(req,res)=>{
+  const {score,feedback,userId,submissionId,eventId}=req.body;
+  const pool = await sql.connect(config);
+
+  const reviewer= await pool
+  .request()
+  .input('userId',sql.Int,parseInt(userId))
+  .query("select reviewer_id from REVIEWER where user_id=@userId")
+  console.log(reviewer)
+
+  const result= await pool
+  .request()
+  .input('score',sql.Int,parseInt(score))
+  .input('feedback',sql.VarChar,feedback)
+  .input('submissionId',sql.Int,parseInt(submissionId))
+  .input('reviewerId',sql.Int,parseInt(reviewer.recordset[0].reviewer_id))
+  .input('eventId',sql.Int,parseInt(eventId))
+  .query("INSERT INTO REVIEW (submission_id,reviewer_id,score,feedback,event_id) VALUES (@submissionId,@reviewerId,@score,@feedback,@eventId)");
+  
+  res.send({msg:"Inserted successfully"})
 });
 
 app.post("/addImage", upload.single("file"), async (req, res) => {
@@ -1583,6 +1609,35 @@ app.post("/getTeamMemebers", async (req, res) => {
 });
 
 // PUT requests
+
+
+app.put("/changeReviewStatus",async(req,res)=>{
+  const { submissionId,eventId } = req.body;
+  const pool = await sql.connect(config);
+  await pool
+  .request()
+  .input("submissionId",sql.Int,parseInt(submissionId))
+  .input("eventId",sql.Int,parseInt(eventId))
+  .input("currentStatus",sql.VarChar,'current')
+  .query("UPDATE SUBMISSION SET status=@currentStatus WHERE submission_id=@submissionId AND event_id=@eventId")
+
+   res.send({msg:"updated Successfully"})
+})
+
+app.put("/changeReviewToComplete",async(req,res)=>{
+  const { submissionId,eventId } = req.body;
+  const pool = await sql.connect(config);
+  await pool
+  .request()
+  .input("submissionId",sql.Int,parseInt(submissionId))
+  .input("eventId",sql.Int,parseInt(eventId))
+  .input("currentStatus",sql.VarChar,'complete')
+  .input("reviewedDate",sql.DateTime,new Date())
+  .query("UPDATE SUBMISSION SET status=@currentStatus, reviewed_date=@reviewedDate WHERE submission_id=@submissionId AND event_id=@eventId")
+
+   res.send({msg:"updated Successfully"})
+})
+
 app.put("/problemSelect", async (req, res) => {
   const { user_id,eventId, ProbId } = req.body;
   console.log(req.body);
