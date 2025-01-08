@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import EventsGrid from './organizer/EventsGrid'
-
+import Navbar from './Navbar';
 const mockEvents = {
   ongoing: [
     {
@@ -65,19 +65,22 @@ function ParticipantDashboard() {
   if (!eventsData || Object.keys(eventsData).length === 0) return <div>No events found.</div>;
   
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {mockEvents.ongoing.length > 0 && (
-        <EventsGrid events={eventsData.ongoing} title="Ongoing Events" />
-      )}
-      
-      {mockEvents.future.length > 0 && (
-        <EventsGrid events={eventsData.future} title="Upcoming Events" />
-      )}
-      
-      {mockEvents.past.length > 0 && (
-        <EventsGrid events={eventsData.past} title="Past Events" />
-      )}
-    </div>
+    <>
+      <Navbar userType="Reviewer" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {mockEvents.ongoing.length > 0 && (
+          <EventsGrid events={eventsData.ongoing} title="Ongoing Events" />
+        )}
+        
+        {mockEvents.future.length > 0 && (
+          <EventsGrid events={eventsData.future} title="Upcoming Events" />
+        )}
+        
+        {mockEvents.past.length > 0 && (
+          <EventsGrid events={eventsData.past} title="Past Events" />
+        )}
+      </div>
+    </>
   )
 }
 

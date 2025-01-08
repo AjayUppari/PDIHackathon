@@ -7,13 +7,14 @@ import DraftsPage from './pages/organizer/DraftsPage';
 import EventDetails from './pages/EventDetails';
 import Login from './components/auth/Login'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import SubmissionsPage from './pages/reviewer/SubmissionsPage'
+import ResultsPage from './pages/results';
 
 function App() {
   
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
-        <Navbar userType="organizer" />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route
@@ -24,7 +25,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/organizer/events/:eventId" element={<EventDetails />} />
+          <Route path="/events/:eventId" element={<EventDetails />} />
           <Route path="/organizer/drafts" element={<DraftsPage />} />
           <Route
             path="/reviewer"
@@ -39,6 +40,22 @@ function App() {
             element={
               <ProtectedRoute requiredRole={null}>
                 <ParticipantDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reviewer/submissions/:eventId"
+            element={
+              <ProtectedRoute requiredRole="Reviewer">
+                <SubmissionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/results/:eventId"
+            element={
+              <ProtectedRoute requiredRole="Anyone">
+                <ResultsPage />
               </ProtectedRoute>
             }
           />

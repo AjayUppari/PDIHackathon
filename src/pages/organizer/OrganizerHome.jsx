@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import EventsGrid from '../../components/organizer/EventsGrid';
 import CreateEventModal from '../../components/CreateEventModal';
 import ModalContext from '../../context/TimelineContext';
+import Navbar from '../../components/Navbar';
 
 const mockEvents = {
   ongoing: [
@@ -153,34 +154,37 @@ function OrganizerHome() {
   console.log('events data is', eventsData);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-[#07003D]">My Events</h1>
-        <button
-          onClick={() => onOpenModal()}
-          className="bg-[#00D2F4] text-white px-4 py-2 rounded-md hover:bg-[#1226AA] transition-colors"
-        >
-          Create New Event
-        </button>
+    <>
+      <Navbar userType="organizer" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-[#07003D]">My Events</h1>
+          <button
+            onClick={() => onOpenModal()}
+            className="bg-[#00D2F4] text-white px-4 py-2 rounded-md hover:bg-[#1226AA] transition-colors"
+          >
+            Create New Event
+          </button>
+        </div>
+
+        {mockEvents.ongoing.length > 0 && (
+          <EventsGrid events={eventsData.ongoing} title="Ongoing Events" />
+        )}
+        
+        {mockEvents.future.length > 0 && (
+          <EventsGrid events={eventsData.future} title="Upcoming Events" />
+        )}
+        
+        {mockEvents.past.length > 0 && (
+          <EventsGrid events={eventsData.past} title="Past Events" />
+        )}
+
+        <CreateEventModal 
+          isOpen={isOpen}
+          onClose={() => onCloseModal()}
+        />
       </div>
-
-      {mockEvents.ongoing.length > 0 && (
-        <EventsGrid events={eventsData.ongoing} title="Ongoing Events" />
-      )}
-      
-      {mockEvents.future.length > 0 && (
-        <EventsGrid events={eventsData.future} title="Upcoming Events" />
-      )}
-      
-      {mockEvents.past.length > 0 && (
-        <EventsGrid events={eventsData.past} title="Past Events" />
-      )}
-
-      <CreateEventModal 
-        isOpen={isOpen}
-        onClose={() => onCloseModal()}
-      />
-    </div>
+    </>
   );
 }
 

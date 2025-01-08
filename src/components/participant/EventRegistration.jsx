@@ -64,7 +64,7 @@ function TeamRegistrationModal({ isOpen, onClose, teamMaxSize, eventId }) {
   const handleConfirmRegistration = async () => {
     // API call to register team
     const userData = localStorage.getItem('userData')
-    const body = { teamName, eventParticipants: teamMembers, user: JSON.parse(userData), eventId: 1 };
+    const body = { teamName, eventParticipants: teamMembers, user: JSON.parse(userData), eventId: eventId };
 
     const url = 'http://localhost:5000/createTeam'
     const response = await fetch(url, {

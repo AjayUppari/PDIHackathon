@@ -18,7 +18,7 @@ function EventCard({ event }) {
   return (
     <div 
       className="bg-white m-4 rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-      onClick={() => navigate(`/organizer/events/${event.id}`, {state: event})}
+      onClick={() => navigate(`/events/${event.id}`, {state: event})}
     >
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-xl font-semibold text-[#07003D]">{event.name}</h3>

@@ -4,16 +4,13 @@ import Slider from "react-slick";
 import EventCard from './EventCard';
 
 function EventsGrid({ events, title }) {
-
-  console.log('events is ', events)
-  console.log('title is ', title)
   
   var settings = {
     dots: true,
-    infinite: true,
+    infinite: false,
     speed: 500,
     slidesToShow: 3,
-    slidesToScroll: 1
+    slidesToScroll: 1,
   };
 
   return (

@@ -79,7 +79,7 @@ function DraftsList({ drafts }) {
     const response = await fetch(url, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json', // Explicitly set the header
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ ...draftData, lastDateModified: nowDateAndTime, isPublished: 'false', userId: userData.userId })
     })
@@ -187,7 +187,7 @@ function DraftsList({ drafts }) {
                   </button>
                   <button
                     onClick={() =>
-                      navigate(`/organizer/drafts/${draft.event_id}/preview`)
+                      navigate(`/events/${draft.event_id}`)
                     }
                     className="text-[#1226AA] hover:text-[#07003D]"
                   >

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import DraftsList from "../../components/organizer/DraftsList";
+import Navbar from "../../components/Navbar";
 
 function DraftsPage() {
   const [draftsData, setDraftsData] = useState([]);
@@ -42,9 +43,12 @@ function DraftsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <DraftsList drafts={draftsData} />
-    </div>
+    <>
+      <Navbar userType='organizer' />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <DraftsList drafts={draftsData} />
+      </div>
+    </>
   );
 }
 

@@ -8,6 +8,7 @@ const mockParticipants = [
 ];
 
 function ParticipantSearch({ onSelect, searchResults }) {
+  console.log('search results of employees is ', searchResults)
   const [search, setSearch] = useState('');
   const [results, setResults] = useState([]);
 
@@ -38,7 +39,7 @@ function ParticipantSearch({ onSelect, searchResults }) {
       />
       
       {results.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200">
+        <div className="h-64 overflow-auto border absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200">
           {results.map((participant) => (
             <button
               key={participant.userId}
@@ -54,7 +55,7 @@ function ParticipantSearch({ onSelect, searchResults }) {
                   <p className="text-sm font-medium">{participant.name}</p>
                   <p className="text-sm text-gray-500">{participant.email}</p>
                 </div>
-                <p className={`text-white text-sm p-1 h-7 w-18 rounded-md ${participant.isSelected === true ? "bg-red-600" : "bg-green-500"}`}>{participant.isSelected === true ? 'Registered': "Available"}</p>
+                <p className={`text-white text-sm p-1 h-7 w-18 rounded-md ${participant.isSelected === true ? "bg-red-600" : "bg-green-500"}`}>{participant.isSelected === true ? 'Unavailable': "Available"}</p>
               </div>
             </button>
           ))}

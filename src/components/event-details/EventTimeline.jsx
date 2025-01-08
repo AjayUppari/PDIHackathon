@@ -4,6 +4,7 @@ import ProjectSelcetionModal from '../participant/forms/ProjectSelectionModal'
 import DocumentSubmissionModal from '../participant/forms/DocumentSubmissionModal'
 import ProjectSubmissionModal from '../participant/forms/ProjectSubmissionModal'
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 async function onClickFinishPhase (phase, index){
   //Here call API for updating the phase status to finished
@@ -51,6 +52,8 @@ function EventTimeline({ phases, eventId, teamMaxSize, eventStatus }) {
     projectSubmission: false
   });
 
+  const navigate = useNavigate()
+
   function onChangeModal(modalStatus){
     setModalStatuses({...modalStatuses, ...modalStatus})
   }
@@ -58,38 +61,47 @@ function EventTimeline({ phases, eventId, teamMaxSize, eventStatus }) {
   function displayTimelinePhaseButtonBasedOnUserRole(phase, index){
 
     const userRole = localStorage.getItem('userRole');
+    if(phase.name === 'results'){
+      return (
+        <button onClick={()=>{
+          navigate(`/results/${eventId}`)
+        }} className="px-2 py-1 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md">View Results</button>
+      )
+    }
 
     if(userRole === 'Organizer' && phase.status === 'active'){
       return (
-        <button onClick={() => onClickFinishPhase(phase.name, index)} className="text-sm text-blue-500 hover:underline">Finish Phase</button>
+        <button onClick={() => onClickFinishPhase(phase.name, index)} className="px-2 py-1 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">Finish Phase</button>
       )
     }
     else if(userRole === 'null'){
       if(phase.name === 'registration_start' && phase.status === 'active'){
         return (
-          <button onClick={() => onChangeModal({register: true})} className="text-sm text-blue-500">Register</button>
+          <button onClick={() => onChangeModal({register: true})} className="px-3 py-1 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">Register</button>
         )
       }
       else if(phase.name === 'problem_selection' && phase.status === 'active'){
         return (
-          <button onClick={() => onChangeModal({projectSelection: true})} className="text-sm text-blue-500">Choose Problem</button>
+          <button onClick={() => onChangeModal({projectSelection: true})} className="px-3 py-1 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">Select Problem</button>
         )
       }
       else if(phase.name === 'design_submission' && phase.status === 'active'){
         return (
-          <button onClick={() => onChangeModal({documentSubmission: true})} className="text-sm text-blue-500">Submit Document</button>
+          <button onClick={() => onChangeModal({documentSubmission: true})} className="px-3 py-1 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">Submit Document</button>
         )
       }
       else if(phase.name === 'project_submission' && phase.status === 'active'){
         return (
-          <button onClick={() => onChangeModal({projectSubmission: true})} className="text-sm text-blue-500">Submit Project</button>
+          <button onClick={() => onChangeModal({projectSubmission: true})} className="px-3 py-1 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">Submit Project</button>
         )
       }
     }
     else if(userRole === 'Reviewer'){
       if(phase.name === 'review' && phase.status === 'active'){
         return (
-          <button className="text-sm text-blue-500">Review Submissions</button>
+          <button onClick={()=>{
+            navigate(`/reviewer/submissions/${eventId}`)
+          }} className="px-3 py-1 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">Review Submissions</button>
         )
       }
     }

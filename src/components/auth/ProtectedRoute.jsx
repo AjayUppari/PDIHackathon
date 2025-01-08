@@ -10,9 +10,14 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   }
 
   try {
-    // Decode token to get user role
+    // Decode the token to get the user role
     const decodedToken = jwtDecode(token);
     const userRole = decodedToken.role;
+
+    // If requiredRole is 'any' or null, allow all logged-in users to access
+    if (requiredRole === 'Anyone' || requiredRole === null) {
+      return children;
+    }
 
     // Check if the user has the required role for the route
     if (userRole !== requiredRole) {
@@ -22,6 +27,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
     // If the role matches, render the component
     return children;
+
   } catch (error) {
     // If token is invalid or decoding fails, redirect to login
     return <Navigate to="/" />;
