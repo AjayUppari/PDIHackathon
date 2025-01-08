@@ -246,8 +246,6 @@ app.get("/events", async (req, res) => {
           {}
         );
       
-      console.log(event)
-
       return {
         id: event.event_id,
         registrationStart: event.registration_end_date,
@@ -625,17 +623,59 @@ app.get("/getData/:id", async (req, res) => {
   }
 });
 
+// app.get("/getCodeSubmissions", async (req, res) => {
+//   const { eventId } = req.query
+
+//   try {
+//     const pool = await sql.connect(config);
+//     const data = pool.request().query(`SELECT t.team_id, t.team_name, t.score, s.status, t.feedback, p.problem_name, s.document_link, s.repository_link, s.live_link, s.submission_id  FROM SUBMISSION s JOIN TEAM t ON s.team_id = t.team_id JOIN PROBLEM p ON s.problem_id = p.problem_id WHERE s.event_id = ${parseInt(eventId)};`);
+//     data.then((result) => {
+//       return res.json(result.recordset);
+//     });
+//   } catch (error) {
+//     console.error("Error with retrieving data from table : ", error);
+//   }
+// });
+
 app.get("/getCodeSubmissions", async (req, res) => {
+  const { eventId } = req.query;
+
   try {
     const pool = await sql.connect(config);
-    const data = pool.request().query(" SELECT t.team_name,p.problem_name,s.document_link,s.repository_link,s.live_link  FROM SUBMISSION s JOIN TEAM t ON s.team_id = t.team_id JOIN PROBLEM p ON s.problem_id = p.problem_id WHERE s.event_id = 1;");
+    const data = pool.request().query(`
+      SELECT 
+        t.team_id, 
+        t.team_name, 
+        s.status, 
+        p.problem_name, 
+        s.document_link, 
+        s.repository_link, 
+        s.live_link, 
+        s.submission_id,
+        r.review_id, 
+        r.score, 
+        r.feedback
+      FROM 
+        SUBMISSION s
+      JOIN 
+        TEAM t ON s.team_id = t.team_id
+      JOIN 
+        PROBLEM p ON s.problem_id = p.problem_id
+      LEFT JOIN 
+        REVIEW r ON s.submission_id = r.submission_id
+      WHERE 
+        s.event_id = ${parseInt(eventId)};
+    `); 
+
     data.then((result) => {
       return res.json(result.recordset);
     });
   } catch (error) {
-    console.error("Error with retrieving data from table : ", error);
+    console.error("Error with retrieving data from table: ", error);
+    return res.status(500).json({ error: "An error occurred while fetching submissions" });
   }
 });
+
 
 app.get("/getAllEmployees/:emailId", async (req, res) => {
   const { emailId } = req.params;
@@ -859,6 +899,12 @@ app.get('/searchEmployees', async (req, res) => {
 app.get("/getAllProblems", async (req, res) => {
   const {eventId,userId} = req.query;
 
+  console.log('event ID is ', eventId)
+  console.log('userId is ', userId)
+
+  console.log('event ID is ', eventId)
+  console.log('userId is ', userId)
+
   const pool = await sql.connect(config);
   const result = await pool
     .request()
@@ -912,8 +958,6 @@ app.post("/createTeam", async (req, res) => {
   .input("teamId",sql.Int,parseInt(result.recordset[0].team_id))
   .input("participantId",sql.Int,parseInt(particpant.recordset[0].participant_id))
   .query(addTeamMember);
-
-  console.log('event participants are ', eventParticipants)
   
   for (const participant of eventParticipants) {
     try {
@@ -1160,12 +1204,9 @@ app.post("/addProblems", async (req, res) => {
 });
 
 app.put("/finishPhase", async (req, res) => {
-  console.log(req.body);
   const { eventId, currentPhaseKey, nextPhaseKey } = req.body;
 
   const pool = await sql.connect(config);
-
-  console.log(currentPhaseKey);
 
   if (currentPhaseKey === "results") {
     const finish = await pool.query(
@@ -1213,7 +1254,6 @@ app.post("/login", async (req, resp) => {
     // Check if user exists
     const user = result.recordset[0];
 
-    console.log(user);
     if (!user) {
       return resp.status(401).json({ error: "Invalid credentials" });
     }
@@ -1223,6 +1263,11 @@ app.post("/login", async (req, resp) => {
     if (!isPasswordValid) {
       return resp.status(401).json({ error: "Invalid credentials" });
     }
+
+    const userId = await pool
+    .request()
+    .input("email", sql.NVarChar, email)
+    .query(`SELECT user_id from USER_COPY where email = @email`)
 
     // Generate JWT token
     const token = jwt.sign(
@@ -1235,7 +1280,7 @@ app.post("/login", async (req, resp) => {
     return resp.json({
       token,
       userRole: user.role,
-      userData: { name: user.username, mail: user.email, userId: user.user_id },
+      userData: { name: user.username, mail: user.email, userId: userId.recordset[0].user_id },
     });
   } catch (error) {
     console.error("Error with retrieving data from table:", error);
@@ -1339,7 +1384,6 @@ app.post("/saveAndPublishEvent", upload.single("file"), async (req, resp) => {
     teamSize,
     userId,
   } = JSON.parse(req.body.eventData);
-  console.log(req.body.eventData)
   const file = req.file;
 
   const pool = await sql.connect(config);
@@ -1415,7 +1459,8 @@ app.post("/saveAndPublishEvent", upload.single("file"), async (req, resp) => {
     await pool.request().query(query);
   }
 
-  if (isPublished === "true") {
+  if (isPublished === 'true') {
+    console.log('timeline table got created')
     const timelineQuery = `
       INSERT INTO TIMELINE (
         registration_start, registration_end, problem_selection, design_submission, project_submission, review, results, event_id
@@ -1490,28 +1535,34 @@ app.post("/documentSub", upload.single("file"), async (req, res) => {
     .input("problemId", sql.Int, parseInt(selectedProblemId.recordset[0].problem_id))
     .input("DocumentLink", sql.NVarChar, publicUrlData.publicUrl)
     .input("docSubDate", sql.DateTime, new Date())
-    .input('status',sql.VarChar,'incomplete')
+    .input('status',sql.VarChar,'pending')
     .query("INSERT INTO SUBMISSION (team_id,problem_id, document_link,event_id, doc_sub_date,status) VALUES (@teamId,@problemId, @DocumentLink,@eventId,@docSubDate,@status);");
 
   console.log("Data inserted successfully:", result);
-
-  
 
   res.status(200).send({
     message: "File uploaded successfully.",
   });
 });
 
-
 app.post('/scoreSubmission',async(req,res)=>{
   const {score,feedback,userId,submissionId,eventId}=req.body;
   const pool = await sql.connect(config);
+
+  await pool
+  .request()
+  .input("submissionId",sql.Int,parseInt(submissionId))
+  .input("eventId",sql.Int,parseInt(eventId))
+  .input("currentStatus",sql.VarChar,'reviewed')
+  .input("reviewedDate",sql.DateTime,new Date())
+  .query("UPDATE SUBMISSION SET status=@currentStatus, reviewed_date=@reviewedDate WHERE submission_id=@submissionId AND event_id=@eventId")
 
   const reviewer= await pool
   .request()
   .input('userId',sql.Int,parseInt(userId))
   .query("select reviewer_id from REVIEWER where user_id=@userId")
-  console.log(reviewer)
+  console.log('review data is ', reviewer)
+
 
   const result= await pool
   .request()
@@ -1610,15 +1661,20 @@ app.post("/getTeamMemebers", async (req, res) => {
 
 // PUT requests
 
-
 app.put("/changeReviewStatus",async(req,res)=>{
-  const { submissionId,eventId } = req.body;
+  let { submissionId, eventId } = req.body;
+  submissionId = parseInt(submissionId)
+  eventId = parseInt(eventId)
+
+  console.log('eventId is ', eventId)
+  console.log('submissionId is ', submissionId)
+  
   const pool = await sql.connect(config);
   await pool
   .request()
   .input("submissionId",sql.Int,parseInt(submissionId))
   .input("eventId",sql.Int,parseInt(eventId))
-  .input("currentStatus",sql.VarChar,'current')
+  .input("currentStatus",sql.VarChar,'Progress')
   .query("UPDATE SUBMISSION SET status=@currentStatus WHERE submission_id=@submissionId AND event_id=@eventId")
 
    res.send({msg:"updated Successfully"})
@@ -1626,12 +1682,13 @@ app.put("/changeReviewStatus",async(req,res)=>{
 
 app.put("/changeReviewToComplete",async(req,res)=>{
   const { submissionId,eventId } = req.body;
+  console.log('change review to complete called')
   const pool = await sql.connect(config);
   await pool
   .request()
   .input("submissionId",sql.Int,parseInt(submissionId))
   .input("eventId",sql.Int,parseInt(eventId))
-  .input("currentStatus",sql.VarChar,'complete')
+  .input("currentStatus",sql.VarChar,'reviewed')
   .input("reviewedDate",sql.DateTime,new Date())
   .query("UPDATE SUBMISSION SET status=@currentStatus, reviewed_date=@reviewedDate WHERE submission_id=@submissionId AND event_id=@eventId")
 
@@ -1831,6 +1888,8 @@ app.put("/saveDraftNew/:draftId", upload.single("file"), async (req, resp) => {
   const organizerResult = await pool.request().query(`
       SELECT organizer_id FROM ORGANIZER WHERE user_id = ${userId}
   `);
+
+  console.log('Organizer result is ', organizerResult)
 
   const organizerId = organizerResult.recordset[0].organizer_id;
 
@@ -2037,6 +2096,16 @@ app.put("/updateAndPublishEvent", upload.single("file"), async (req, resp) => {
 
     await pool.request().query(query);
   }
+
+  const timelineQuery = `
+    INSERT INTO TIMELINE (
+      registration_start, registration_end, problem_selection, design_submission, project_submission, review, results, event_id
+    ) VALUES (
+      'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', ${eventId}
+    );
+  `;
+
+  await pool.request().query(timelineQuery);
 
   resp.send({
     eventId,
