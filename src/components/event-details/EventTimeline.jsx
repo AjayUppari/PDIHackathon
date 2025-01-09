@@ -33,6 +33,7 @@ async function onClickFinishPhase (phase, index){
   const jsonData = await response.json();
 
   console.log('response is ', jsonData)
+  
 }
 
 function snakeToSentence(snakeCaseStr) {
@@ -44,7 +45,7 @@ function snakeToSentence(snakeCaseStr) {
 let phasesData;
 let eventID
 
-function EventTimeline({ phases, eventId, teamMaxSize, eventStatus }) {
+function EventTimeline({ phases, eventId, teamMaxSize, eventStatus,fetchAllEvents }) {
   const [modalStatuses, setModalStatuses] = useState({
     register: false,
     projectSelection: false,
@@ -59,7 +60,7 @@ function EventTimeline({ phases, eventId, teamMaxSize, eventStatus }) {
   }
 
   function displayTimelinePhaseButtonBasedOnUserRole(phase, index){
-
+    console.log("phase",phase)
     const userRole = localStorage.getItem('userRole');
     if(phase.name === 'results'){
       return (
@@ -68,7 +69,7 @@ function EventTimeline({ phases, eventId, teamMaxSize, eventStatus }) {
         }} className="px-2 py-1 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md">View Results</button>
       )
     }
-
+    console.log(userRole,phase)
     if(userRole === 'Organizer' && phase.status === 'active'){
       return (
         <button onClick={() => onClickFinishPhase(phase.name, index)} className="px-2 py-1 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">Finish Phase</button>

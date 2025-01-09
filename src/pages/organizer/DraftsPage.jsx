@@ -44,7 +44,7 @@ function DraftsPage() {
 
   return (
     <>
-      <Navbar userType='organizer' />
+      <Navbar userType='organizer' username={JSON.parse(localStorage.getItem("userData")).name}/>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <DraftsList drafts={draftsData} />
       </div>

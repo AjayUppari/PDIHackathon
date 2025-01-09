@@ -64,25 +64,29 @@ function EventDetails() {
   const location = useLocation()
   const data = location.state
 
-  useEffect(() => {
-    async function fetchAllEvents() {
-      try {
-        const eventsResponse = await fetch(`http://localhost:5000/event/${eventId}`);
-        if (!eventsResponse.ok) {
-          throw new Error(`Error fetching events: ${eventsResponse.statusText}`);
-        }
-        const eventsJsonData = await eventsResponse.json();
-        console.log("Testing :",eventsJsonData)
-
-        setEventDetailsData(eventsJsonData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+  async function fetchAllEvents() {
+    try {
+      const eventsResponse = await fetch(`http://localhost:5000/event/${eventId}`);
+      if (!eventsResponse.ok) {
+        throw new Error(`Error fetching events: ${eventsResponse.statusText}`);
       }
+      const eventsJsonData = await eventsResponse.json();
+      console.log("Testing :",eventsJsonData)
+
+      setEventDetailsData(eventsJsonData);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  useEffect(() => {
+    
     fetchAllEvents();
   }, []);
+
+  
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -92,7 +96,7 @@ function EventDetails() {
   
   return (
     <>
-      <Navbar userType={"User"} />
+      <Navbar userType={"User"} username={JSON.parse(localStorage.getItem("userData")).name}/>
       <div className="min-h-screen bg-gray-100 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <EventHeader eventName={eventDetailsData.event_name} />
@@ -122,7 +126,10 @@ function EventDetails() {
                 {name:"project_submission",deadline:eventDetailsData.project_submission_deadline, status: eventDetailsData.timeline.project_submission},
                 {name:"review",deadline:eventDetailsData.reviewer_submission_deadline, status: eventDetailsData.timeline.review},
                 {name:"results",deadline:eventDetailsData.results_announcement_date, status: eventDetailsData.timeline.results},
-                ]} eventId={eventDetailsData.event_id} teamMaxSize={eventDetailsData.team_size} eventStatus={eventDetailsData.status} />
+                ]} eventId={eventDetailsData.event_id} teamMaxSize={eventDetailsData.team_size} eventStatus={eventDetailsData.status} 
+                
+                
+                />
             </div>
           </div>
         </div>

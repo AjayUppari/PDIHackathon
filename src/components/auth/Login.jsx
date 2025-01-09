@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import { useTimeline } from '../../context/TimelineContext'
+import logo from '../../assets/PDI_color_Logo.jpg'
 
 function Login({ setIsAuthenticated }) {
   const [error, setError] = useState("");
@@ -8,23 +8,14 @@ function Login({ setIsAuthenticated }) {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
-  })
-  // const { addUserDetails } = useTimeline()
-
-
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   console.log('Login data:', formData);
-  //   setIsAuthenticated(formData.userType);
-  //   navigate('/');
-  // };
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData)
+    console.log(formData);
 
-    const userDataFromLocalStorage = JSON.parse(localStorage.getItem('userData'))
-    console.log(userDataFromLocalStorage)
+    const userDataFromLocalStorage = JSON.parse(localStorage.getItem('userData'));
+    console.log(userDataFromLocalStorage);
 
     try {
       const response = await fetch("http://localhost:5000/login", {
@@ -44,8 +35,6 @@ function Login({ setIsAuthenticated }) {
 
       const data = await response.json();
       const { token, userRole, userData } = data;
-
-      // addUserDetails(user)
 
       // Store the token
       localStorage.setItem("jwtToken", token);
@@ -68,8 +57,15 @@ function Login({ setIsAuthenticated }) {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
+          {/* Added Image */}
+          <img 
+            src={logo}
+            alt="PDI Logo" 
+            className="mx-auto w-1/2 h-1/2 mb-16"
+          /> 
+          {/* Updated Title */}
           <h2 className="mt-6 text-center text-3xl font-extrabold text-primary">
-            Sign in to HackathonHub
+            Sign in to PDI Hackathon
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

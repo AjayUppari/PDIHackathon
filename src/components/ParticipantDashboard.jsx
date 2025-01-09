@@ -149,7 +149,7 @@ function ParticipantDashboard() {
 
   return (
     <>
-      <Navbar userType="Participant" />
+      <Navbar userType="Participant" username={JSON.parse(localStorage.getItem("userData")).name}/>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {mockEvents.ongoing.length > 0 && (
           <EventsGrid events={eventsData.ongoing} title="Ongoing Events" />
