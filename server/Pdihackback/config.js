@@ -1,9 +1,9 @@
 
 const config = {
-  user: "AjayUppari",
-  password: "ajayuppari02",
-  server: "INHYPDILT129",
-  database: "PDIHackathon",
+  user: "Tharun",
+  password: "123",
+  server: "INHYPDILT169",
+  database: "PdiHackathon",
   options: {
     trustServerCertificate: true,
     trustedConnection:false,
