@@ -245,13 +245,15 @@ app.get("/events", async (req, res) => {
           }),
           {}
         );
+
+      console.log('event end date is ', event)
       
       return {
         id: event.event_id,
         registrationStart: event.registration_end_date,
         name: event.event_name,
         startDate: event.registration_start_date,
-        endDate: event.registration_end_date,
+        endDate: event.results_announcement_date,
         status: event.status,
         participants: participants.filter(
           (participant) => participant.event_id === event.event_id
@@ -677,6 +679,25 @@ app.get("/getCodeSubmissions", async (req, res) => {
 });
 
 
+app.get("/getMyReviews",async(req,res)=>{
+  const {eventId,userId} = req.query;
+  const pool = await sql.connect(config);
+  const result = await pool
+    .request()
+    .input("userId", sql.Int, parseInt(userId))
+    .query('select reviewer_id from REVIEWER where user_id=@userId');
+
+  
+const data= await pool
+  .request()
+  .input('reviewerId',sql.Int,parseInt(result.recordset[0].reviewer_id))
+  .input('eventId',sql.Int,parseInt(eventId))
+  .query('select t.team_name, r.score,r.feedback,s.document_link,s.repository_link from REVIEW r join SUBMISSION s on r.submission_id=s.submission_id join team t on t.team_id = s.team_id where r.reviewer_id=@reviewerId and r.event_id=@eventId;')
+res.send(data.recordset);
+
+})
+
+
 app.get("/getAllEmployees/:emailId", async (req, res) => {
   const { emailId } = req.params;
   const pool = await sql.connect(config);
@@ -918,6 +939,14 @@ app.get("/getAllProblems", async (req, res) => {
     .query(
       "SELECT participant_id FROM PARTICIPANT WHERE user_id = @userId AND event_id=@eventId"
     );
+
+  console.log('particpant is ', particpant.recordset.length)
+
+  if(particpant.recordset.length === 0) {
+    console.log('if block')
+    res.send({msg: 'User is not registered'})
+    return
+  }
 
   const team= await pool
     .request()
@@ -1535,7 +1564,7 @@ app.post("/documentSub", upload.single("file"), async (req, res) => {
     .input("problemId", sql.Int, parseInt(selectedProblemId.recordset[0].problem_id))
     .input("DocumentLink", sql.NVarChar, publicUrlData.publicUrl)
     .input("docSubDate", sql.DateTime, new Date())
-    .input('status',sql.VarChar,'pending')
+    .input('status',sql.VarChar,'To be Reviewed')
     .query("INSERT INTO SUBMISSION (team_id,problem_id, document_link,event_id, doc_sub_date,status) VALUES (@teamId,@problemId, @DocumentLink,@eventId,@docSubDate,@status);");
 
   console.log("Data inserted successfully:", result);
@@ -1545,15 +1574,17 @@ app.post("/documentSub", upload.single("file"), async (req, res) => {
   });
 });
 
-app.post('/scoreSubmission',async(req,res)=>{
+app.put('/scoreSubmission',async(req,res)=>{
   const {score,feedback,userId,submissionId,eventId}=req.body;
+
+  console.log('request body is ', req.body)
   const pool = await sql.connect(config);
 
   await pool
   .request()
   .input("submissionId",sql.Int,parseInt(submissionId))
   .input("eventId",sql.Int,parseInt(eventId))
-  .input("currentStatus",sql.VarChar,'reviewed')
+  .input("currentStatus",sql.VarChar,'Reviewed')
   .input("reviewedDate",sql.DateTime,new Date())
   .query("UPDATE SUBMISSION SET status=@currentStatus, reviewed_date=@reviewedDate WHERE submission_id=@submissionId AND event_id=@eventId")
 
@@ -1563,7 +1594,6 @@ app.post('/scoreSubmission',async(req,res)=>{
   .query("select reviewer_id from REVIEWER where user_id=@userId")
   console.log('review data is ', reviewer)
 
-
   const result= await pool
   .request()
   .input('score',sql.Int,parseInt(score))
@@ -1571,7 +1601,7 @@ app.post('/scoreSubmission',async(req,res)=>{
   .input('submissionId',sql.Int,parseInt(submissionId))
   .input('reviewerId',sql.Int,parseInt(reviewer.recordset[0].reviewer_id))
   .input('eventId',sql.Int,parseInt(eventId))
-  .query("INSERT INTO REVIEW (submission_id,reviewer_id,score,feedback,event_id) VALUES (@submissionId,@reviewerId,@score,@feedback,@eventId)");
+  .query("UPDATE REVIEW SET score=@score, feedback=@feedback WHERE submission_id=@submissionId AND event_id=@eventId AND reviewer_id=@reviewerId");
   
   res.send({msg:"Inserted successfully"})
 });
@@ -1662,7 +1692,8 @@ app.post("/getTeamMemebers", async (req, res) => {
 // PUT requests
 
 app.put("/changeReviewStatus",async(req,res)=>{
-  let { submissionId, eventId } = req.body;
+  let { submissionId, eventId, userId } = req.body;
+  console.log('reviewer id is ', userId)
   submissionId = parseInt(submissionId)
   eventId = parseInt(eventId)
 
@@ -1674,21 +1705,34 @@ app.put("/changeReviewStatus",async(req,res)=>{
   .request()
   .input("submissionId",sql.Int,parseInt(submissionId))
   .input("eventId",sql.Int,parseInt(eventId))
-  .input("currentStatus",sql.VarChar,'Progress')
+  .input("currentStatus",sql.VarChar,'In Progress')
   .query("UPDATE SUBMISSION SET status=@currentStatus WHERE submission_id=@submissionId AND event_id=@eventId")
 
+  const reviewer= await pool
+  .request()
+  .input('userId',sql.Int,parseInt(userId))
+  .query("select reviewer_id from REVIEWER where user_id=@userId")
+  console.log('review data is ', reviewer)
+
+  const result= await pool
+  .request()
+  .input('submissionId',sql.Int,parseInt(submissionId))
+  .input('score', sql.Int,parseInt(0))
+  .input('feedback', sql.NVarChar, '')
+  .input('reviewerId',sql.Int,parseInt(reviewer.recordset[0].reviewer_id))
+  .input('eventId',sql.Int,parseInt(eventId))  
+  .query("INSERT INTO REVIEW (submission_id,reviewer_id,score,feedback,event_id) VALUES (@submissionId,@reviewerId,@score,@feedback,@eventId)")
    res.send({msg:"updated Successfully"})
 })
 
 app.put("/changeReviewToComplete",async(req,res)=>{
   const { submissionId,eventId } = req.body;
-  console.log('change review to complete called')
   const pool = await sql.connect(config);
   await pool
   .request()
   .input("submissionId",sql.Int,parseInt(submissionId))
   .input("eventId",sql.Int,parseInt(eventId))
-  .input("currentStatus",sql.VarChar,'reviewed')
+  .input("currentStatus",sql.VarChar,'Reviewed')
   .input("reviewedDate",sql.DateTime,new Date())
   .query("UPDATE SUBMISSION SET status=@currentStatus, reviewed_date=@reviewedDate WHERE submission_id=@submissionId AND event_id=@eventId")
 
