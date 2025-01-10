@@ -77,8 +77,6 @@ function TeamRegistrationModal({ isOpen, onClose, teamMaxSize, eventId }) {
 
     const data = await response.json()
 
-    console.log(data)
-
     setShowConfirmation(false);
     onClose();
   };

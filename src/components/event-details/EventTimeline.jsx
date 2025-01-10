@@ -6,7 +6,7 @@ import ProjectSubmissionModal from '../participant/forms/ProjectSubmissionModal'
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-async function onClickFinishPhase (phase, index){
+async function onClickFinishPhase (phase, index, fetchAllEvents){
   //Here call API for updating the phase status to finished
   const currentPhaseKey = phase
   let nextPhaseKey
@@ -33,6 +33,8 @@ async function onClickFinishPhase (phase, index){
   const jsonData = await response.json();
 
   console.log('response is ', jsonData)
+
+  fetchAllEvents()
   
 }
 
@@ -62,7 +64,7 @@ function EventTimeline({ phases, eventId, teamMaxSize, eventStatus,fetchAllEvent
   function displayTimelinePhaseButtonBasedOnUserRole(phase, index){
     console.log("phase",phase)
     const userRole = localStorage.getItem('userRole');
-    if(phase.name === 'results'){
+    if(phase.status !== 'pending' && phase.name === 'results'){
       return (
         <button onClick={()=>{
           navigate(`/results/${eventId}`)
@@ -72,7 +74,7 @@ function EventTimeline({ phases, eventId, teamMaxSize, eventStatus,fetchAllEvent
     console.log(userRole,phase)
     if(userRole === 'Organizer' && phase.status === 'active'){
       return (
-        <button onClick={() => onClickFinishPhase(phase.name, index)} className="px-2 py-1 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">Finish Phase</button>
+        <button onClick={() => onClickFinishPhase(phase.name, index, fetchAllEvents)} className="px-2 py-1 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">Finish Phase</button>
       )
     }
     else if(userRole === 'null'){
@@ -125,7 +127,7 @@ function EventTimeline({ phases, eventId, teamMaxSize, eventStatus,fetchAllEvent
                 <p className="text-sm text-gray-500">
                   {format(new Date(phase.deadline), 'MM/dd/yyyy')}
                 </p>
-                {eventStatus === 'Ongoing' && displayTimelinePhaseButtonBasedOnUserRole(phase, index)}
+                {(eventStatus === 'Ongoing' || eventStatus === 'Past') && displayTimelinePhaseButtonBasedOnUserRole(phase, index)}
               </div>
             </div>
           ))}

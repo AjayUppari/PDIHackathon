@@ -128,7 +128,7 @@ function EventDetails() {
                 {name:"results",deadline:eventDetailsData.results_announcement_date, status: eventDetailsData.timeline.results},
                 ]} eventId={eventDetailsData.event_id} teamMaxSize={eventDetailsData.team_size} eventStatus={eventDetailsData.status} 
                 
-                
+                fetchAllEvents={fetchAllEvents}
                 />
             </div>
           </div>

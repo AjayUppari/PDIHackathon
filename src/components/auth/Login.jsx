@@ -64,7 +64,7 @@ function Login({ setIsAuthenticated }) {
             className="mx-auto w-1/2 h-1/2 mb-16"
           /> 
           {/* Updated Title */}
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-primary">
+          <h2 className="mt-6 text-center text-blue-800 text-3xl font-extrabold">
             Sign in to PDI Hackathon
           </h2>
         </div>

@@ -25,6 +25,7 @@ function DocumentSubmissionModal({ isOpen, onClose, onSubmit, eventId }) {
     })
     const data = await response.json()
 
+    onClose()
   }
 
   return (

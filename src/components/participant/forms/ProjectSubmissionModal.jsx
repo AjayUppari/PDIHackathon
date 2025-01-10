@@ -34,6 +34,8 @@ function ProjectSubmissionModal({ isOpen, onClose, onSubmit, eventId }) {
     const data = await response.json()
     console.log(data)
 
+    onClose()
+
   }
 
   return (

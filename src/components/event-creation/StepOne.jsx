@@ -48,10 +48,10 @@ function StepOne({ eventData, setEventData }) {
         </div>
       </div>
 
-      <div>
+      {/* <div>
         <label className='text-sm font-medium text-gray-700 mb-2 block' htmlFor='eventPoster'>Upload Poster</label>
         <input onChange={(e) => setEventData({...eventData, poster: e.target.files[0]})} type='file' id='eventPoster' />
-      </div>
+      </div> */}
     </div>
   )
 }

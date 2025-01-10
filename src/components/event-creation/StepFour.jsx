@@ -28,7 +28,7 @@ function StepFour({ eventData, setEventData }) {
                   type="text"
                   value={eventData.prizes[position]}
                   onChange={(e) => handlePrizeChange(position, e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="mt-1 border-gray-300 border-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   placeholder={`Enter ${index + 1}st prize details`}
                 />
               </div>

@@ -35,12 +35,12 @@ function StepTwo({ eventData, setEventData }) {
         <h3 className="text-lg font-medium text-gray-900 mb-4">Add Problem Statement</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Title</label>
+            <label className="outline-none block text-sm font-medium text-gray-700">Title</label>
             <input
               type="text"
               value={newProblem.title}
               onChange={(e) => setNewProblem({ ...newProblem, title: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 h-8 border-gray-300 border-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
           </div>
           <div>
@@ -49,7 +49,7 @@ function StepTwo({ eventData, setEventData }) {
               rows={4}
               value={newProblem.description}
               onChange={(e) => setNewProblem({ ...newProblem, description: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block border-gray-300 border-2 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
           </div>
           <button
